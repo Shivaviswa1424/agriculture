@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AgriBazaar — Sell Produce (Sample)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: linear-gradient(180deg,#f6fff6,#f0fff4);
+    --accent:#10b24a;
+    --accent-2:#0a7b36;
+    --muted:#577862;
+    --card:#ffffff;
+    --glass: rgba(255,255,255,0.7);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#072b16;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:18px auto;padding:14px}
+  header{display:flex;align-items:center;gap:14px}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;box-shadow:0 10px 30px rgba(10,130,53,0.12)}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:4px 0 12px;color:var(--muted);font-weight:700}
+  /* Hero */
+  .hero{margin-top:12px;background:linear-gradient(180deg,#fff,#f7fff8);padding:18px;border-radius:14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 18px 40px rgba(6,85,36,0.06);border:1px solid rgba(10,130,53,0.04)}
+  .hero-top{display:flex;align-items:center;gap:12px}
+  .hero-crest{width:78px;height:78px;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px;box-shadow:0 10px 30px rgba(10,130,53,0.12)}
+  .hero h2{margin:0;font-size:18px}
+  .hero p{margin:0;color:var(--muted)}
+  .cta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .btn{padding:10px 14px;border-radius:10px;border:0;font-weight:800;cursor:pointer}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
+  .btn.ghost{background:transparent;border:2px solid rgba(10,130,53,0.08);color:var(--accent-2)}
+  /* filters */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .filters input,.filters select{padding:10px;border-radius:10px;border:1px solid rgba(10,130,53,0.06);font-weight:700}
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+  .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(6,85,36,0.06);border:1px solid rgba(10,130,53,0.04);transition:transform .2s,box-shadow .2s}
+  .card:hover{transform:translateY(-6px);box-shadow:0 22px 48px rgba(6,85,36,0.12)}
+  .prod-img{width:100%;height:160px;object-fit:cover;border-radius:10px;background:#eef8ee}
+  .prod-title{font-weight:800;margin:8px 0 4px}
+  .prod-meta{display:flex;justify-content:space-between;align-items:center}
+  .tag{background:linear-gradient(90deg, rgba(16,178,72,0.08), rgba(10,123,54,0.02));padding:6px 8px;border-radius:999px;font-weight:800;color:var(--accent-2);font-size:13px}
+  .price{font-weight:900;color:#173e22}
+  .muted{color:var(--muted)}
+  /* responsive */
+  @media(min-width:900px){ .grid{grid-template-columns:repeat(3,1fr)} }
+  @media(max-width:520px){ .grid{grid-template-columns:1fr} .hero-top{flex-direction:row} }
+  /* modal styles */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(5,10,5,0.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
+  .modal{background:#fff;border-radius:12px;padding:16px;max-width:720px;width:100%;box-shadow:0 30px 60px rgba(0,0,0,0.2);border:1px solid rgba(0,0,0,0.04)}
+  .modal h3{margin:0 0 8px}
+  .small{font-size:13px}
+  /* form */
+  form .row{display:flex;gap:8px}
+  form input, form textarea, form select{padding:10px;border-radius:8px;border:1px solid rgba(10,130,53,0.06);font-weight:700;width:100%}
+  form textarea{min-height:110px;resize:vertical}
+  .image-preview{width:100%;height:160px;border-radius:10px;background:#f6fff6;display:grid;place-items:center;color:var(--muted);font-weight:800;border:2px dashed rgba(10,130,53,0.06)}
+  /* cart bar */
+  .cart-bar{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;padding:12px;border-radius:12px;box-shadow:0 18px 36px rgba(10,130,53,0.15);z-index:80;display:flex;gap:10px;align-items:center}
+  .cart-count{background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:999px;font-weight:900}
+  /* subtle animated badges */
+  .pulse{animation:pulse 2.2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,178,72,0.12)}70%{box-shadow:0 0 0 12px rgba(16,178,72,0)}100%{box-shadow:0 0 0 0 rgba(16,178,72,0)}}
+  /* micro interactions */
+  .fade-in{opacity:0;transform:translateY(8px);animation:fadeIn .6s forwards}
+  @keyframes fadeIn{to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo" aria-hidden>AB</div>
+      <div>
+        <h1>AgriBazaar — Sell Produce</h1>
+        <p class="lead">Reach buyers across markets. Create listings, manage inventory and connect directly.</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn ghost" id="myListingsBtn" title="My Listings">My Listings</button>
+        <button class="btn primary" id="createListingBtn">+ Create Listing</button>
+      </div>
+    </header>
+
+    <section class="hero fade-in" aria-label="hero">
+      <div class="hero-top">
+        <div class="hero-crest">SELL</div>
+        <div>
+          <h2>Sell smarter — list faster</h2>
+          <p>Post your commodity with price, quantity, images & reach verified buyers. Secure, fast and farmer-friendly.</p>
+          <div class="small muted">Tip: This demo uses local data; connect to your backend to persist listings.</div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <select id="filterCommodity" aria-label="filter commodity">
+          <option value="">All Commodities</option>
+          <option>Potato</option><option>Tomato</option><option>Onion</option><option>Wheat</option><option>Rice</option>
+        </select>
+
+        <select id="filterState" aria-label="filter state">
+          <option value="">All States</option>
+          <option>Karnataka</option><option>Tamil Nadu</option><option>Maharashtra</option>
+        </select>
+
+        <input id="filterSearch" placeholder="Search market or title" aria-label="search" />
+        <button class="btn primary" id="applyFilter">Apply</button>
+      </div>
+    </section>
+
+    <!-- product grid -->
+    <div class="grid" id="productGrid" aria-live="polite">
+      <!-- JS will populate sample cards -->
+    </div>
+
+    <!-- cart / quick bar -->
+    <div class="cart-bar" id="cartBar" aria-live="polite" style="display:none">
+      <div style="font-weight:800">Cart</div>
+      <div class="cart-count" id="cartCount">0</div>
+      <button class="btn ghost" onclick="openCart()">View</button>
+    </div>
+  </div>
+
+  <!-- Modal backdrop -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" style="display:none">
+    <div class="modal" id="modalContent">
+      <!-- content injected -->
+    </div>
+  </div>
+
+<script>
+/* -----------------------
+  Sell.html - client demo
+  - In-memory sample marketplace
+  - Create listing form (client-only)
+  - Product card, modal detail, add-to-cart
+  - Image preview handling
+------------------------*/
+
+// Sample product data
+// Sample product data with real images
+let products = [
+  {
+    id: 1,
+    title: 'Fresh Potatoes — A Grade',
+    commodity: 'Potato',
+    state: 'Karnataka',
+    market: 'Mysore',
+    price: 1250,
+    qty: '10 quintal',
+    img: 'https://5.imimg.com/data5/SELLER/Default/2022/2/UK/TZ/RT/30001218/fresh-potato-1000x1000.jpeg',
+    desc: 'Certified potatoes - good for storage',
+    seller: 'Ravi Farms',
+    phone: '+919800000001'
+  },
+  {
+    id: 2,
+    title: 'Tomato Farm Fresh',
+    commodity: 'Tomato',
+    state: 'Tamil Nadu',
+    market: 'Coimbatore',
+    price: 1800,
+    qty: '5 quintal',
+    img: 'https://tse3.mm.bing.net/th/id/OIP.08lClRW2SJRbqSredljDNQHaFF?pid=Api&P=0&h=180',
+    desc: 'Bright red tomatoes, ripe picked',
+    seller: 'Anbu Produce',
+    phone: '+919800000002'
+  },
+  {
+    id: 3,
+    title: 'Red Onion — 50kg sacks',
+    commodity: 'Onion',
+    state: 'Maharashtra',
+    market: 'Pune',
+    price: 2200,
+    qty: '30 quintal',
+    img: 'https://img1.exportersindia.com/product_images/bc-full/2025/1/13045171/b-grade-red-onion-1736922555-7800844.jpeg',
+    desc: 'Dry cured onions',
+    seller: 'Shree Agro',
+    phone: '+919800000003'
+  },
+  {
+    id: 4,
+    title: 'Basmati Rice — Fresh Crop',
+    commodity: 'Rice',
+    state: 'Punjab',
+    market: 'Amritsar',
+    price: 4200,
+    qty: '20 quintal',
+    img: 'https://tse4.mm.bing.net/th/id/OIP.g3H1lQjbbg5IdYILBdC4-gHaEK?pid=Api&P=0&h=180',
+    desc: 'Premium basmati, 5% moisture',
+    seller: 'Golden Rice Co',
+    phone: '+919800000004'
+  }
+];
+
+
+// in-memory cart
+let cart = [];
+
+// helpers
+const productGrid = document.getElementById('productGrid');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalContent = document.getElementById('modalContent');
+const cartBar = document.getElementById('cartBar');
+const cartCount = document.getElementById('cartCount');
+
+// generate placeholder images (SVG data URI)
+function placeholderSVG(text, w=800, h=450){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><rect width='100%' height='100%' fill='#f6fff6'/><text x='50%' y='50%' font-size='28' text-anchor='middle' fill='#2e7d2e' font-family='Inter,Arial' dy='.35em'>${text}</text></svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// render products
+function renderProducts(list){
+  productGrid.innerHTML = '';
+  if(!list || list.length === 0){
+    productGrid.innerHTML = '<div class="card">No listings found</div>';
+    return;
+  }
+  list.forEach(p=>{
+    const card = document.createElement('div'); card.className='card fade-in';
+    card.innerHTML = `
+      <img class="prod-img" src="${p.img || placeholderSVG(p.title)}" alt="${p.title}">
+      <div class="prod-title">${p.title}</div>
+      <div class="muted small">${p.commodity} • ${p.market}, ${p.state}</div>
+      <div class="prod-meta" style="margin-top:8px">
+        <div class="price">₹ ${p.price}</div>
+        <div class="tag">${p.qty}</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn primary" onclick="openDetail(${p.id})">View</button>
+        <button class="btn ghost" onclick="addToCart(${p.id})">Add</button>
+      </div>
+    `;
+    productGrid.appendChild(card);
+  });
+}
+
+// open product detail modal
+function openDetail(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  modalContent.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <img src="${p.img || placeholderSVG(p.title,560,320)}" alt="${p.title}" style="width:48%;border-radius:10px;object-fit:cover">
+      <div style="width:52%">
+        <h3>${p.title}</h3>
+        <div class="muted small">${p.commodity} • ${p.market}, ${p.state}</div>
+        <p style="font-weight:900;font-size:20px;margin:10px 0">₹ ${p.price} <span class="muted" style="font-weight:700"> • ${p.qty}</span></p>
+        <p class="muted">${p.desc}</p>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn primary" onclick="addToCart(${p.id}); closeModal()">Add to Cart</button>
+          <button class="btn ghost" onclick="contactSeller('${p.seller}','${p.phone}')">Contact Seller</button>
+          <button class="btn ghost" onclick="closeModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+  openModal();
+}
+
+// modal control
+function openModal(){ modalBackdrop.style.display='flex'; }
+function closeModal(){ modalBackdrop.style.display='none'; modalContent.innerHTML=''; }
+
+// cart functions
+function addToCart(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  cart.push({...p});
+  cartCount.textContent = cart.length;
+  cartBar.style.display = 'flex';
+  // small animation
+  cartBar.animate([{transform:'translateY(8px)'},{transform:'none'}],{duration:220});
+  alert(`${p.title} added to cart`);
+}
+
+function openCart(){
+  if(cart.length === 0){ alert('Cart empty'); return; }
+  modalContent.innerHTML = `<h3>Cart (${cart.length})</h3><div style="margin-top:8px">${cart.map((c,i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04)"><div><strong>${c.title}</strong><div class="muted small">${c.qty} • ₹ ${c.price}</div></div><div><button class="btn ghost" onclick="callSeller('${c.phone}')">Call</button></div></div>`).join('')}</div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" onclick="checkout()">Checkout</button><button class="btn ghost" onclick="closeModal()">Close</button></div>`;
+  openModal();
+}
+
+function checkout(){
+  alert('Checkout demo — integrate payments or order flow in backend.');
+  // reset cart for demo
+  cart = [];
+  cartCount.textContent = 0;
+  cartBar.style.display = 'none';
+  closeModal();
+}
+
+// seller contact
+function contactSeller(seller, mobile){
+  const ok = confirm(`Contact Seller:\n${seller}\n${mobile}\n\nCall now?`);
+  if(ok) window.location.href = `tel:${mobile}`;
+}
+function callSeller(mobile){ window.location.href = `tel:${mobile}`; }
+
+// create listing flow (modal form)
+document.getElementById('createListingBtn').addEventListener('click', ()=>openCreateForm());
+
+function openCreateForm(){
+  modalContent.innerHTML = `
+    <h3>Create New Listing</h3>
+    <form id="createForm" style="margin-top:8px">
+      <div class="row" style="margin-bottom:8px">
+        <input name="title" placeholder="Title (e.g., Fresh Potatoes - A Grade)" required>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <input name="commodity" placeholder="Commodity (e.g., Potato)" required>
+        <input name="qty" placeholder="Quantity (e.g., 10 quintal)" required>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <input name="price" placeholder="Price per unit (₹)" required>
+        <input name="market" placeholder="Market" required>
+      </div>
+      <div style="margin-bottom:8px">
+        <input name="state" placeholder="State" required>
+      </div>
+      <div style="margin-bottom:8px">
+        <textarea name="desc" placeholder="Short description"></textarea>
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-weight:800">Upload image</label>
+        <input type="file" id="listingImage" accept="image/*">
+        <div id="listingPreview" class="image-preview" style="margin-top:8px">No image selected</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn primary" type="button" onclick="submitListing()">Create Listing</button>
+        <button class="btn ghost" type="button" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  `;
+  // hook image preview
+  document.getElementById('listingImage').addEventListener('change', handleListingImage);
+  openModal();
+}
+
+function handleListingImage(e){
+  const file = e.target.files && e.target.files[0];
+  const preview = document.getElementById('listingPreview');
+  if(!file){ preview.innerHTML='No image selected'; return; }
+  if(!file.type.startsWith('image/')){ alert('Please select an image'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev)=>{ preview.innerHTML = `<img src="${ev.target.result}" alt="Preview" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`; };
+  reader.readAsDataURL(file);
+}
+
+// submit listing (client-only)
+function submitListing(){
+  const form = document.getElementById('createForm');
+  const formData = new FormData(form);
+  const title = formData.get('title') || 'Untitled';
+  const commodity = formData.get('commodity') || 'Commodity';
+  const qty = formData.get('qty') || '1';
+  const price = Number(formData.get('price')) || 0;
+  const market = formData.get('market') || 'Local';
+  const state = formData.get('state') || 'State';
+  const desc = formData.get('desc') || '';
+  // find preview image src if any
+  const previewImg = document.querySelector('#listingPreview img')?.src || '';
+  const id = Date.now();
+  const newProduct = {id,title,commodity,state,market,price,qty,img:previewImg,desc,seller:'You',phone:'+91-000000000'};
+  products.unshift(newProduct);
+  renderProducts(products);
+  closeModal();
+  alert('Listing created (demo). To persist listings, send this data to your backend.');
+}
+
+// filters
+document.getElementById('applyFilter').addEventListener('click', ()=>{
+  const c = document.getElementById('filterCommodity').value.trim();
+  const s = document.getElementById('filterState').value.trim();
+  const q = document.getElementById('filterSearch').value.trim().toLowerCase();
+  let list = products.slice();
+  if(c) list = list.filter(x=>x.commodity === c);
+  if(s) list = list.filter(x=>x.state === s);
+  if(q) list = list.filter(x=> x.title.toLowerCase().includes(q) || x.market.toLowerCase().includes(q));
+  renderProducts(list);
+});
+
+// my listings (filter)
+document.getElementById('myListingsBtn').addEventListener('click', ()=>{
+  const my = products.filter(p=>p.seller === 'You');
+  renderProducts(my.length?my:[]);
+});
+
+// initial render
+renderProducts(products);
+
+// close modal on backdrop click (but not when clicking inside)
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal(); });
+
+</script>
+</body>
+</html>
