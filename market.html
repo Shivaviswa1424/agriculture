@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agri Market — Live Prices (Sample)</title>
+
+<!-- Fonts + Chart.js -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg: linear-gradient(180deg,#f7fff7,#f0fff4);
+    --card:#ffffff;
+    --accent:#0da34a;
+    --accent-2:#0a7b36;
+    --muted:#607a63;
+    --glass: rgba(255,255,255,0.8);
+    --radius:14px;
+    --shadow: 0 16px 40px rgba(6,85,36,0.06);
+    --glass-border: rgba(10,130,53,0.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#083b1e;min-height:100vh;padding:16px}
+  .wrap{max-width:1100px;margin:0 auto}
+  header{display:flex;align-items:center;gap:14px}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;box-shadow:0 8px 20px rgba(6,85,36,0.12)}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:4px 0 12px;color:var(--muted);font-weight:600}
+
+  /* Search card */
+  .search-card{background:var(--card);border-radius:12px;padding:14px;margin-top:12px;box-shadow:var(--shadow);border:1px solid var(--glass-border);display:grid;gap:10px}
+  .controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .controls select, .controls button, .controls input{padding:12px;border-radius:10px;border:1px solid rgba(10,130,53,0.06);font-weight:700}
+  .controls button{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;border:none;cursor:pointer}
+  .controls .wide{grid-column:span 2}
+
+  /* Layout */
+  .main-grid{display:grid;grid-template-columns:1fr 360px;gap:12px;margin-top:12px}
+  .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);border:1px solid var(--glass-border)}
+  .muted{color:var(--muted)}
+  .results-table{width:100%;border-collapse:collapse;margin-top:12px}
+  .results-table th, .results-table td{padding:10px;border-bottom:1px solid rgba(10,130,53,0.04);text-align:left}
+  .results-table th{font-weight:800;color:#0f4220}
+  .tag{display:inline-block;padding:6px 8px;border-radius:999px;background:linear-gradient(90deg, rgba(13,163,74,0.08), rgba(13,163,74,0.02));font-weight:800;color:var(--accent-2)}
+  .empty{padding:20px;text-align:center;color:var(--muted)}
+
+  /* small screens */
+  @media(max-width:980px){
+    .main-grid{grid-template-columns:1fr}
+    .controls{grid-template-columns:1fr;gap:8px}
+    .controls .wide{grid-column:auto}
+  }
+
+  /* subtle animations */
+  .fade-up{opacity:0;transform:translateY(10px);animation:fadeUp .6s forwards}
+  @keyframes fadeUp{to{opacity:1;transform:none}}
+
+  /* animated highlight for price changes */
+  .price-up{background:linear-gradient(90deg, rgba(20,180,80,0.06), rgba(20,180,80,0.02));transition:background .6s}
+  .price-down{background:linear-gradient(90deg, rgba(255,120,120,0.06), rgba(255,120,120,0.02));transition:background .6s}
+</style>
+</head>
+<body>
+  <div class="wrap fade-up">
+    <header>
+      <div class="logo">AM</div>
+      <div>
+        <h1>AgriMarket — Prices & Trends</h1>
+        <p class="lead">Search daily mandi prices & see recent trends (sample UI inspired by agmarknet.gov.in).</p>
+      </div>
+    </header>
+
+    <!-- Search -->
+    <div class="search-card" role="region" aria-label="market search">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div class="muted">Search market prices by commodity & location</div>
+        <div><span class="tag">Data source: Agmarknet / Data.gov.in</span></div>
+      </div>
+
+      <div class="controls" style="margin-top:8px">
+        <select id="commoditySelect" aria-label="Commodity">
+          <option value="">— Select Commodity —</option>
+          <option>Potato</option><option>Onion</option><option>Tomato</option><option>Rice</option><option>Wheat</option>
+        </select>
+
+        <select id="stateSelect" aria-label="State">
+          <option value="">— Select State —</option>
+          <option>Karnataka</option><option>Tamil Nadu</option><option>Maharashtra</option><option>Uttar Pradesh</option>
+        </select>
+
+        <input id="marketInput" class="wide" placeholder="Market name (optional)" aria-label="Market name"/>
+
+        <button id="searchBtn" onclick="doSearch()">Search</button>
+      </div>
+      <div style="margin-top:10px;color:var(--muted);font-size:13px">Tip: Replace <code>API_ENDPOINT</code> in the script with a working Agmarknet/scraper/proxy URL to load real data. If none is provided, sample data is used.</div>
+    </div>
+
+    <!-- Main grid: results & sidebar -->
+    <div class="main-grid">
+      <div>
+        <div class="card" id="resultsCard">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <strong id="resultsTitle">Results</strong><br>
+              <small class="muted" id="resultsSubtitle">No search yet</small>
+            </div>
+            <div id="lastUpdated" class="muted" style="font-size:13px">—</div>
+          </div>
+
+          <div id="tableWrap">
+            <table class="results-table" id="resultsTable" aria-live="polite">
+              <thead>
+                <tr><th>Market</th><th>Min</th><th>Max</th><th>Modal</th><th>Date</th></tr>
+              </thead>
+              <tbody id="resultsBody">
+                <tr><td colspan="5" class="empty">Search to view market prices (sample data shown if no API)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:12px">
+            <canvas id="trendChart" height="120" style="width:100%"></canvas>
+          </div>
+        </div>
+
+        <!-- History / tips -->
+        <div class="card" style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:800">Quick Tips</div>
+            <div class="muted">Data: daily mandi prices</div>
+          </div>
+          <ul style="margin:10px 0 0 18px;color:var(--muted)">
+            <li>Use modal price to compare typical market price.</li>
+            <li>Check arrivals & trend before deciding sale.</li>
+            <li>Use server proxy for reliable live data (we show how below).</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sidebar: market info -->
+      <aside>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:800">Market Info</div>
+            <div id="badge" class="tag">Sample</div>
+          </div>
+
+          <div id="marketCardContent" style="margin-top:10px;color:var(--muted)">
+            <div class="muted">No market selected</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:800;margin-bottom:8px">Connect Real Data</div>
+          <p class="muted">To use Agmarknet live data you typically need to either:</p>
+          <ol class="muted" style="margin-left:18px">
+            <li>Use an official Agmarknet API (if available) or</li>
+            <li>Run a server-side scraper/proxy that fetches Agmarknet pages and returns JSON (many community scripts exist) — recommended to avoid CORS/blocking. :contentReference[oaicite:2]{index=2}</li>
+          </ol>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn" onclick="showHow()">How to connect</button>
+            <button class="btn ghost" onclick="loadMock()">Load sample data</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+/*
+  Sample Agri Market page (client-only).
+  - Set API_ENDPOINT to your backend or a public scraper (if available).
+  - The expected API JSON format (per-row): { market, min_price, max_price, modal_price, date }
+  - If API_ENDPOINT is empty or fetch fails, the page loads mock sample data.
+*/
+
+/* CONFIG: replace with your proxy/API if you have one.
+   Example proxy: https://your-proxy.example.com/agmark?commodity=Potato&state=Karnataka&market=Bangalore
+*/
+const API_ENDPOINT = ''; // <-- put your API/proxy endpoint here (optional)
+
+const resultsBody = document.getElementById('resultsBody');
+const resultsTitle = document.getElementById('resultsTitle');
+const resultsSubtitle = document.getElementById('resultsSubtitle');
+const lastUpdated = document.getElementById('lastUpdated');
+const marketCardContent = document.getElementById('marketCardContent');
+const badge = document.getElementById('badge');
+
+let chart = null;
+
+// tiny helper: friendly date
+function fmtDate(d){
+  const dt = new Date(d);
+  return dt.toLocaleDateString();
+}
+
+// build a table row
+function appendRow(r){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:700">${r.market}</td>
+    <td class="${r.min_change>0?'price-up':r.min_change<0?'price-down':''}">₹ ${r.min_price}</td>
+    <td class="${r.max_change>0?'price-up':r.max_change<0?'price-down':''}">₹ ${r.max_price}</td>
+    <td>₹ ${r.modal_price}</td>
+    <td>${r.date}</td>
+  `;
+  resultsBody.appendChild(tr);
+
+  // click to show market details
+  tr.addEventListener('click', ()=>showMarketCard(r));
+}
+
+// show market detail
+function showMarketCard(r){
+  badge.textContent = r.market;
+  marketCardContent.innerHTML = `
+    <div style="font-weight:800">${r.market} — ${r.date}</div>
+    <div style="margin-top:8px"><strong>Modal price:</strong> ₹ ${r.modal_price}</div>
+    <div style="margin-top:6px;color:var(--muted)"><small>Min: ₹${r.min_price} • Max: ₹${r.max_price}</small></div>
+    <div style="margin-top:10px"><button class="btn" onclick="alert('Contact buyer/seller flow — implement as needed')">Connect Buyer/Seller</button></div>
+  `;
+}
+
+// draw trend chart (7-day example)
+function drawChart(labels, series){
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Modal Price (₹)',
+        data: series,
+        tension: 0.28,
+        fill: true,
+        backgroundColor: 'rgba(10,163,74,0.08)',
+        borderColor: 'rgba(10,163,74,0.9)',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{grid:{color:'rgba(10,130,53,0.04)'}}
+      },
+      responsive:true,
+      maintainAspectRatio:false
+    }
+  });
+}
+
+// Search action
+async function doSearch(){
+  const commodity = document.getElementById('commoditySelect').value.trim();
+  const state = document.getElementById('stateSelect').value.trim();
+  const market = document.getElementById('marketInput').value.trim();
+
+  resultsTitle.textContent = (commodity ? commodity : 'All commodities') + ' — Results';
+  resultsSubtitle.textContent = (state ? state : 'All states') + (market ? ' • ' + market : '');
+
+  // build request (if API_ENDPOINT provided)
+  const params = new URLSearchParams();
+  if(commodity) params.set('commodity', commodity);
+  if(state) params.set('state', state);
+  if(market) params.set('market', market);
+
+  // clear table
+  resultsBody.innerHTML = '<tr><td colspan="5" class="empty">Loading…</td></tr>';
+  lastUpdated.textContent = '';
+
+  // try to fetch from API or fallback to mock
+  if(API_ENDPOINT){
+    try{
+      const url = API_ENDPOINT + (API_ENDPOINT.includes('?') ? '&' : '?') + params.toString();
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+      if(!Array.isArray(data) || data.length === 0) throw new Error('No data returned');
+      renderResults(data);
+      lastUpdated.textContent = 'Live';
+      return;
+    }catch(err){
+      console.warn('API fetch failed:', err);
+      // continue to mock data
+    }
+  }
+
+  // MOCK DATA (used when no API or API fails)
+  const mock = generateMockData(commodity || 'Potato', market || 'Bangalore');
+  // small delay to simulate network
+  setTimeout(()=>{ renderResults(mock); lastUpdated.textContent = 'Sample (mock)'; }, 600);
+}
+
+// render array of rows
+function renderResults(rows){
+  resultsBody.innerHTML = '';
+  rows.forEach(appendRow);
+  // build 7-day trend from modal prices (group by date)
+  const trend = aggregateTrend(rows);
+  drawChart(trend.labels, trend.series);
+}
+
+// helper: aggregate trend by date (simple)
+function aggregateTrend(rows){
+  // pick last 7 unique dates sorted ascending
+  const byDate = {};
+  rows.forEach(r => {
+    if(!byDate[r.date]) byDate[r.date] = [];
+    byDate[r.date].push(r.modal_price);
+  });
+  const dates = Object.keys(byDate).sort((a,b)=> new Date(a) - new Date(b)).slice(-7);
+  const labels = dates.map(d=>d);
+  const series = dates.map(d=> Math.round(byDate[d].reduce((s,v)=>s+v,0)/byDate[d].length) );
+  return {labels, series};
+}
+
+// generate mock rows
+function generateMockData(commodity='Potato', market='Bangalore'){
+  const today = new Date();
+  const rows = [];
+  // produce a few markets and dates
+  const markets = [market, 'Mysore', 'Tumkur', 'Chikkaballapur', 'Hassan', 'Davangere'];
+  for(let i=0;i<markets.length;i++){
+    const price = 1200 + Math.round(Math.random()*800);
+    const r = {
+      market: markets[i],
+      min_price: price - Math.round(Math.random()*200),
+      max_price: price + Math.round(Math.random()*200),
+      modal_price: price,
+      date: fmtDate(new Date(today.getTime() - Math.round(Math.random()*6)*24*60*60*1000)),
+      min_change: (Math.random()-0.5)*2,
+      max_change: (Math.random()-0.5)*2
+    };
+    rows.push(r);
+  }
+  // create repeated dates for trend
+  const trendRows = [];
+  for(let d=6;d>=0;d--){
+    const dt = new Date(today.getTime() - d*24*60*60*1000);
+    trendRows.push({market: market, min_price: 1000+d*5, max_price: 1400+d*5, modal_price: 1200+d*10, date: fmtDate(dt)});
+  }
+  // return combined: markets + trend sample
+  return [...rows, ...trendRows];
+}
+
+// UI helpers
+function loadMock(){ const mock = generateMockData(); renderResults(mock); lastUpdated.textContent='Sample (mock)'; resultsTitle.textContent='Sample Data'; resultsSubtitle.textContent='Mock market set'; }
+
+function showHow(){
+  alert('Connect to live Agmarknet data by:\n1) Using an official API if available;\n2) Running a server-side scraper/proxy that fetches Agmarknet pages and returns JSON (recommended to avoid CORS and blocking).\n\nI can provide a ready-to-deploy proxy (Vercel/Netlify) if you want.');
+}
+
+// Init: draw empty chart
+drawChart([],[]);
+
+</script>
+</body>
+</html>

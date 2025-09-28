@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Local Weather — OpenWeatherMap / Fallback</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#0ca84f; --accent-2:#0a7b36; --muted:#6b7b6a; --card:#fff;
+    --bg: linear-gradient(180deg,#f3fff4,#f7fff9);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#083b1e;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:18px}
+  .wrap{width:100%;max-width:980px}
+  header{display:flex;align-items:center;gap:12px;padding:6px 10px}
+  .title{font-weight:800;font-size:20px;color:var(--accent-2)}
+  .subtitle{color:var(--muted);font-weight:700;font-size:13px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,0.96),#fbfff8);border-radius:18px;padding:14px;margin-top:8px;border:1px solid rgba(10,130,53,0.06);box-shadow:0 18px 40px rgba(6,85,36,0.06)}
+  .current-row{display:flex;gap:18px;align-items:center;justify-content:space-between}
+  .current-left{display:flex;gap:12px;align-items:center}
+  .weather-icon{width:92px;height:92px;border-radius:12px;background:linear-gradient(180deg,rgba(12,168,79,0.06),rgba(10,123,54,0.03));display:flex;align-items:center;justify-content:center;font-size:36px}
+  .temp{font-size:44px;font-weight:800;color:#123b1e}
+  .cond{font-weight:700;color:var(--muted);margin-top:6px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;color:var(--muted);font-weight:700;font-size:13px}
+  .source-badge{font-size:12px;padding:6px 8px;border-radius:10px;background:rgba(10,130,53,0.06);font-weight:800;color:var(--accent-2);display:inline-block;margin-left:8px}
+  .hourly{margin-top:14px;overflow:auto;padding-bottom:6px}
+  .hourly-grid{display:flex;gap:12px}
+  .hour{min-width:78px;background:linear-gradient(180deg,#fff,#f7fff8);border-radius:12px;padding:8px 10px;text-align:center;border:1px solid rgba(10,130,53,0.04)}
+  .hour .h-time{font-weight:700;color:var(--muted);font-size:13px}
+  .hour .h-temp{font-weight:800;font-size:16px;margin-top:6px}
+  .days{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .day{background:linear-gradient(180deg,#fff,#fbfff8);border-radius:12px;padding:10px;text-align:center;border:1px solid rgba(10,130,53,0.04)}
+  .day .d-name{font-weight:800;color:var(--muted)}
+  .info-grid{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .info{flex:1;min-width:140px;background:linear-gradient(180deg,#fff,#fbfff8);padding:10px;border-radius:12px;border:1px solid rgba(10,130,53,0.04);font-weight:700;color:var(--muted)}
+  .controls{display:flex;gap:8px;margin-top:12px;align-items:center}
+  .btn{padding:10px 12px;border-radius:10px;border:none;font-weight:800;cursor:pointer}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+  .btn.ghost{background:#fff;border:1px solid rgba(10,130,53,0.06)}
+  .muted{color:var(--muted)}
+  .error{color:#a63b3b;background:rgba(166,59,59,0.06);padding:8px;border-radius:8px;margin-top:8px;font-weight:800}
+  @media (max-width:820px){ .current-row{flex-direction:column;align-items:flex-start} .days{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:480px){ .days{grid-template-columns:1fr} .weather-icon{width:76px;height:76px;font-size:28px} .temp{font-size:36px} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="title">Local Weather</div>
+        <div class="subtitle">OpenWeatherMap with Open-Meteo fallback</div>
+      </div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end">
+        <div id="locName" class="muted">Detecting location…</div>
+        <div id="sourceBadge" class="source-badge" aria-live="polite">Source: —</div>
+      </div>
+    </header>
+
+    <div class="card" id="mainCard" role="region" aria-live="polite">
+      <div class="current-row">
+        <div class="current-left">
+          <div class="weather-icon" id="icon"><img id="iconImg" src="" alt="" style="width:68px;height:68px"></div>
+          <div>
+            <div class="temp" id="temp">--°C</div>
+            <div class="cond" id="cond">Loading…</div>
+            <div class="meta" id="meta">—</div>
+          </div>
+        </div>
+
+        <div style="min-width:160px;text-align:right">
+          <div class="muted">Feels like</div>
+          <div style="font-weight:800;font-size:20px" id="feels">--°C</div>
+          <div style="margin-top:10px" class="muted small" id="updated">—</div>
+        </div>
+      </div>
+
+      <div id="errorMsg" style="display:none" class="error"></div>
+
+      <div class="hourly" id="hourly" aria-label="Hourly forecast">
+        <div class="hourly-grid" id="hourlyGrid"></div>
+      </div>
+
+      <div class="days" id="days"></div>
+
+      <div class="info-grid" id="infoGrid"></div>
+
+      <div class="controls">
+        <button class="btn primary" id="refreshBtn">Refresh</button>
+        <button class="btn ghost" id="toggleUnit">°C / °F</button>
+        <div style="margin-left:auto" class="muted small">Data: OpenWeatherMap → fallback Open-Meteo</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/*
+  Behavior:
+   - Try OpenWeather OneCall (client-side) using OPENWEATHER_KEY.
+   - If OpenWeather returns 401 or fails, display a clear message and fall back to Open-Meteo.
+   - Optional: set PROXY_URL to route OpenWeather requests through a server (recommended).
+   - NOTE: embedding API keys in client code is insecure for production.
+*/
+
+// ---------- CONFIG ----------
+const OPENWEATHER_KEY = '33922bc57bac3c9ba586daf1e2ef0022'; // your key (for testing only)
+// const PROXY_URL = 'https://your-proxy.example.com/api/weather?'; // OPTIONAL: proxy prefix, e.g. /api/weather?lat=...&lon=...
+const PROXY_URL = ''; // leave empty to call OpenWeather directly from client
+
+const state = { unit:'C', lat:null, lon:null, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' };
+
+// helpers
+const cToF = c => Math.round((c * 9/5) + 32);
+const cToFround = c => Math.round((c * 9/5) + 32);
+function setText(id, txt){ const el = document.getElementById(id); if(el) el.textContent = txt; }
+function showError(msg){ const e = document.getElementById('errorMsg'); e.style.display='block'; e.textContent = msg; }
+function clearError(){ const e = document.getElementById('errorMsg'); e.style.display='none'; e.textContent = ''; }
+function setSource(name){ document.getElementById('sourceBadge').textContent = `Source: ${name}`; }
+
+// reverse geocode using Nominatim
+async function reverseGeocode(lat, lon){
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const j = await r.json();
+    const name = j.address && (j.address.city || j.address.town || j.address.village || j.address.county || j.display_name);
+    setText('locName', name || `${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+  }catch(e){
+    setText('locName', `${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+  }
+}
+
+/* ---------- OpenWeather (client) ---------- */
+async function fetchWeatherOWM(lat, lon){
+  // If PROXY_URL is set, route via proxy (proxy should forward to OpenWeather with key server-side)
+  if(PROXY_URL){
+    const url = `${PROXY_URL}lat=${lat}&lon=${lon}&units=metric`;
+    const r = await fetch(url);
+    if(!r.ok){ const t = await r.text().catch(()=>r.statusText); const err = new Error(`Proxy error ${r.status}: ${t}`); err.status = r.status; throw err; }
+    return r.json();
+  }
+  // direct client-side call (exposes key to users)
+  const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,alerts&units=metric&appid=${OPENWEATHER_KEY}`;
+  const res = await fetch(url);
+  if(!res.ok){
+    const txt = await res.text().catch(()=>res.statusText);
+    const err = new Error(`OWM error ${res.status}: ${txt}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+/* ---------- Open-Meteo (fallback) ---------- */
+async function fetchWeatherOpenMeteo(lat, lon){
+  const hourlyVars = ['temperature_2m','apparent_temperature','precipitation','precipitation_probability','windspeed_10m','relativehumidity_2m','weathercode'];
+  const dailyVars = ['temperature_2m_max','temperature_2m_min','sunrise','sunset','precipitation_sum','windspeed_10m_max','weathercode'];
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&hourly=${hourlyVars.join(',')}` +
+    `&daily=${dailyVars.join(',')}` +
+    `&current_weather=true&timezone=${encodeURIComponent(state.tz)}&temperature_unit=celsius`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('Open-Meteo network error');
+  return r.json();
+}
+
+/* ---------- Renderers for OpenWeather ---------- */
+function renderIconFromOWM(iconCode){ return iconCode ? `https://openweathermap.org/img/wn/${iconCode}@2x.png` : ''; }
+
+function renderOWMCurrent(data){
+  clearError();
+  setSource('OpenWeather');
+  const cur = data.current;
+  const tempC = Math.round(cur.temp);
+  const temp = state.unit === 'F' ? cToFround(tempC) : tempC;
+  setText('temp', `${temp}°${state.unit}`);
+  setText('cond', cur.weather?.[0]?.description?.replace(/\b\w/g, l=>l.toUpperCase()) || '—');
+  setText('feels', `${(state.unit === 'F' ? cToFround(Math.round(cur.feels_like)) : Math.round(cur.feels_like))}°${state.unit}`);
+  setText('meta', `Wind ${Math.round(cur.wind_speed)} m/s • ${cur.wind_deg}°`);
+  setText('updated', `Updated: ${new Date(cur.dt * 1000).toLocaleString()}`);
+  const icon = cur.weather?.[0]?.icon;
+  const img = document.getElementById('iconImg');
+  if(icon){ img.src = renderIconFromOWM(icon); img.alt = cur.weather[0].description; document.getElementById('icon').style.display = 'block'; }
+  else { img.src=''; img.alt=''; document.getElementById('icon').style.display = 'none'; }
+}
+
+function renderOWMHourly(data){
+  const grid = document.getElementById('hourlyGrid'); grid.innerHTML='';
+  for(let i=0;i<24 && i < data.hourly.length; i++){
+    const h = data.hourly[i];
+    const dt = new Date(h.dt * 1000);
+    const hour = dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    let tempC = Math.round(h.temp);
+    const temp = state.unit === 'F' ? cToFround(tempC) : tempC;
+    const prec = (h.pop || 0) * 100;
+    const icon = h.weather?.[0]?.icon ? `<img src="${renderIconFromOWM(h.weather[0].icon)}" alt="" style="width:36px;height:36px">` : '';
+    const el = document.createElement('div'); el.className='hour';
+    el.innerHTML = `<div class="h-time">${hour}</div><div class="h-icon">${icon}</div><div class="h-temp">${temp}°${state.unit}</div><div class="h-prec">${prec>0?Math.round(prec)+'%':''}</div>`;
+    grid.appendChild(el);
+  }
+}
+
+function renderOWMDaily(data){
+  const daysEl = document.getElementById('days'); daysEl.innerHTML='';
+  for(let i=0;i<Math.min(7, data.daily.length); i++){
+    const d = data.daily[i];
+    const dt = new Date(d.dt * 1000);
+    const name = dt.toLocaleDateString(undefined, {weekday:'short'});
+    let max = Math.round(d.temp.max), min = Math.round(d.temp.min);
+    if(state.unit === 'F'){ max = cToFround(max); min = cToFround(min); }
+    const icon = d.weather?.[0]?.icon ? `<img src="${renderIconFromOWM(d.weather[0].icon)}" alt="" style="width:40px;height:40px">` : '';
+    const el = document.createElement('div'); el.className='day';
+    el.innerHTML = `<div class="d-name">${name}</div><div class="d-icon" style="margin-top:6px">${icon}</div><div class="d-temp">${max}° / ${min}°</div>`;
+    daysEl.appendChild(el);
+  }
+}
+
+function renderOWMInfo(data){
+  const info = document.getElementById('infoGrid'); info.innerHTML='';
+  const today = data.daily?.[0];
+  if(!today) return;
+  const sunrise = new Date(today.sunrise * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const sunset  = new Date(today.sunset * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const precip = (today.rain || today.pop || 0);
+  const windMax = Math.round(today.wind_speed || 0);
+  const humidity = Math.round(data.current.humidity || 0);
+  const items = [
+    {title:'Sunrise / Sunset', val:`${sunrise} / ${sunset}`},
+    {title:'Precip (24h)', val:`${precip} mm`},
+    {title:'Wind (max)', val:`${windMax} m/s`},
+    {title:'Humidity', val:`${humidity}%`}
+  ];
+  items.forEach(it=>{
+    const el = document.createElement('div'); el.className='info';
+    el.innerHTML = `<div style="font-weight:900">${it.val}</div><small>${it.title}</small>`;
+    info.appendChild(el);
+  });
+}
+
+/* ---------- Renderers for Open-Meteo (fallback) ---------- */
+const iconMap = {
+  0: '☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',56:'🌧️',57:'🌧️',61:'🌦️',63:'🌧️',65:'⛈️',71:'❄️',73:'❄️',75:'❄️',80:'🌧️',81:'🌧️',82:'⛈️',95:'⛈️'
+};
+
+function renderMeteoCurrent(data){
+  clearError();
+  setSource('Open-Meteo (fallback)');
+  const cw = data.current_weather;
+  const tempC = Math.round(cw.temperature);
+  const temp = state.unit === 'F' ? cToFround(tempC) : tempC;
+  setText('temp', `${temp}°${state.unit}`);
+  setText('cond', (iconMap[cw.weathercode]||'Cloudy') );
+  setText('feels', `${(state.unit==='F'?cToFround(Math.round(data.hourly.apparent_temperature[0])):Math.round(data.hourly.apparent_temperature[0]))}°${state.unit}`);
+  setText('meta', `Wind ${Math.round(cw.windspeed)} km/h`);
+  setText('updated', `Updated: ${new Date().toLocaleString()}`);
+  // emoji icon in icon slot
+  document.getElementById('iconImg').src = '';
+  document.getElementById('icon').textContent = iconMap[cw.weathercode] || '☁️';
+}
+
+function renderMeteoHourly(data){
+  const grid = document.getElementById('hourlyGrid'); grid.innerHTML='';
+  const times = data.hourly.time;
+  for(let i=0;i<24;i++){
+    const tISO = times[i];
+    const dt = new Date(tISO);
+    const hour = dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    let temp = Math.round(data.hourly.temperature_2m[i]);
+    if(state.unit === 'F') temp = cToFround(temp);
+    const code = data.hourly.weathercode?.[i];
+    const icon = iconMap[code] || '☁️';
+    const el = document.createElement('div'); el.className='hour';
+    el.innerHTML = `<div class="h-time">${hour}</div><div class="h-icon">${icon}</div><div class="h-temp">${temp}°${state.unit}</div><div class="h-prec">${(data.hourly.precipitation?.[i]||0)} mm</div>`;
+    grid.appendChild(el);
+  }
+}
+
+function renderMeteoDaily(data){
+  const daysEl = document.getElementById('days'); daysEl.innerHTML='';
+  const times = data.daily.time;
+  for(let i=0;i<times.length;i++){
+    const dt = new Date(times[i]);
+    const name = dt.toLocaleDateString(undefined,{weekday:'short'});
+    let max = Math.round(data.daily.temperature_2m_max[i]), min = Math.round(data.daily.temperature_2m_min[i]);
+    if(state.unit === 'F'){ max = cToFround(max); min = cToFround(min); }
+    const icon = iconMap[data.daily.weathercode?.[i]] || '☁️';
+    const el = document.createElement('div'); el.className='day';
+    el.innerHTML = `<div class="d-name">${name}</div><div class="d-icon" style="font-size:26px;margin-top:6px">${icon}</div><div class="d-temp">${max}° / ${min}°</div>`;
+    daysEl.appendChild(el);
+  }
+}
+
+function renderMeteoInfo(data){
+  const info = document.getElementById('infoGrid'); info.innerHTML='';
+  const sunrise = data.daily.sunrise[0], sunset = data.daily.sunset[0];
+  const precip = data.daily.precipitation_sum[0] || 0;
+  const windMax = data.daily.windspeed_10m_max[0] || 0;
+  const humidity = Math.round((data.hourly.relativehumidity_2m[0]||0));
+  const items = [
+    {title:'Sunrise / Sunset', val:`${new Date(sunrise).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} / ${new Date(sunset).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`},
+    {title:'Precip (24h)', val:`${precip} mm`},
+    {title:'Wind (max)', val:`${Math.round(windMax)} km/h`},
+    {title:'Humidity', val:`${humidity}%`}
+  ];
+  items.forEach(it=>{
+    const el = document.createElement('div'); el.className='info';
+    el.innerHTML = `<div style="font-weight:900">${it.val}</div><small>${it.title}</small>`;
+    info.appendChild(el);
+  });
+}
+
+/* ---------- Orchestration: try OpenWeather, else fallback ---------- */
+async function loadWeatherWithFallback(){
+  try{
+    clearError();
+    setText('cond','Loading weather…');
+    // try OpenWeather (may throw)
+    const owm = await fetchWeatherOWM(state.lat, state.lon);
+    renderOWMCurrent(owm);
+    renderOWMHourly(owm);
+    renderOWMDaily(owm);
+    renderOWMInfo(owm);
+  }catch(err){
+    console.warn('OpenWeather failed:', err);
+    // If 401 specifically, show clear message
+    if(err && err.status === 401){
+      showError('OpenWeather API unauthorized (401). Using Open-Meteo fallback — consider deploying a server proxy for your key.');
+    } else {
+      showError('OpenWeather failed — using Open-Meteo fallback.');
+    }
+    try{
+      const met = await fetchWeatherOpenMeteo(state.lat, state.lon);
+      renderMeteoCurrent(met);
+      renderMeteoHourly(met);
+      renderMeteoDaily(met);
+      renderMeteoInfo(met);
+    }catch(e){
+      console.error('Fallback failed', e);
+      showError('Weather unavailable (network/CORS).');
+      setText('cond','Weather unavailable');
+    }
+  }
+}
+
+/* ---------- Initialization ---------- */
+function start(){
+  if(!('geolocation' in navigator)){ alert('Geolocation is not supported in this browser.'); return; }
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    state.lat = pos.coords.latitude; state.lon = pos.coords.longitude;
+    await reverseGeocode(state.lat, state.lon);
+    await loadWeatherWithFallback();
+  }, err=>{
+    alert('Location permission denied or unavailable. You can provide coordinates manually in the code.');
+    setText('locName','Location unavailable');
+    setSource('—');
+  }, {enableHighAccuracy:true, timeout:8000});
+}
+
+// controls
+document.getElementById('refreshBtn').addEventListener('click', ()=> loadWeatherWithFallback());
+document.getElementById('toggleUnit').addEventListener('click', ()=>{ state.unit = state.unit === 'C' ? 'F' : 'C'; loadWeatherWithFallback(); });
+
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Uzhavan Comrade — Smart Crop Advisory</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --green-1:#10b24a;
+      --green-2:#0a8f35;
+      --bg:#f3fff6;
+      --card:#ffffff;
+      --muted:#5f8560;
+      --accent:#13b24a;
+      --radius:16px;
+      --shadow-lg: 0 22px 40px rgba(10,130,53,0.12);
+      --shadow-sm: 0 8px 22px rgba(7,90,36,0.06);
+      --glass: rgba(255,255,255,0.6);
+      --max-width:1100px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background: linear-gradient(180deg, rgba(16,178,72,0.06) 0%, rgba(10,143,53,0.03) 40%, var(--bg) 100%);
+      color:#0b3b24;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:var(--max-width);
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,255,250,0.98));
+      border-radius:22px;
+      box-shadow: var(--shadow-lg);
+      overflow:hidden;
+      border:1px solid rgba(10,130,53,0.06);
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:0;
+    }
+
+    /* Left panel */
+    .panel-left{
+      background: linear-gradient(180deg, var(--green-1), var(--green-2));
+      color:white;
+      padding:28px 22px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .brand{
+      display:flex;align-items:center;gap:12px
+    }
+    .logo{
+      width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .brand h1{margin:0;font-size:18px;letter-spacing:0.2px}
+    .brand p{margin:0;font-size:12px;opacity:0.95}
+
+    .search-card{
+      background:rgba(255,255,255,0.06);
+      border-radius:14px;padding:10px;border:1px solid rgba(255,255,255,0.06);
+    }
+    .select-wrap{position:relative}
+    select.crop-select{
+      width:100%;padding:12px 46px 12px 14px;border-radius:10px;border:none;background:rgba(255,255,255,0.06);color:white;font-weight:700;font-size:14px;appearance:none;cursor:pointer;
+    }
+    .select-wrap::after{content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.85);pointer-events:none}
+
+    .guide-compact{background:rgba(255,255,255,0.06);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);}
+    .guide-compact .title{font-weight:800;color:white;margin-bottom:8px}
+    .guide-compact ul{margin:0;padding:0;list-style:none;font-size:13px}
+    .guide-compact li{display:flex;gap:8px;align-items:flex-start;color:rgba(255,255,255,0.95);font-weight:600;padding:6px 0}
+    .guide-compact .sub{font-weight:500;color:rgba(255,255,255,0.9);display:block;margin-left:28px;font-size:13px}
+
+    .quick-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.08);padding:10px 12px;border-radius:10px;color:white;font-weight:700;cursor:pointer;transition:transform .16s ease, box-shadow .16s ease}
+    .btn:hover{transform:translateY(-4px);box-shadow:var(--shadow-sm)}
+    .btn.primary{background:white;color:var(--green-2);font-weight:800}
+
+    /* Right area */
+    .panel-right{padding:26px;background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(249,255,250,0.98));}
+
+    .hero{display:flex;gap:18px;align-items:center;justify-content:space-between}
+    .hero .title{font-size:20px;font-weight:800;color:var(--green-2)}
+    .hero p{margin:6px 0 0;color:var(--muted);font-weight:600}
+
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+    .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow-sm);border:1px solid rgba(10,130,53,0.04);}
+    .card h3{margin:0;font-size:15px;color:#16542b}
+    .card p{margin:8px 0 0;color:var(--muted);font-weight:600;font-size:13px}
+
+    .full-card{grid-column:1/-1;display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .demo-list{display:flex;gap:8px;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+    .demo-list button{background:transparent;border:1px dashed rgba(19,139,57,0.12);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
+
+    .footer{margin-top:18px;text-align:center;color:var(--muted);font-weight:700;font-size:13px}
+
+    /* Responsive */
+    @media (max-width:980px){
+      .wrap{grid-template-columns:1fr;max-width:760px}
+      .panel-left{order:2;padding:18px}
+      .panel-right{order:1;padding:18px}
+      .cards{grid-template-columns:1fr}
+      .hero{flex-direction:column;align-items:flex-start;gap:6px}
+    }
+
+    @media (max-width:480px){
+      body{padding:18px}
+      .brand h1{font-size:16px}
+      .logo{width:48px;height:48px;font-size:18px}
+      .panel-left{padding:16px}
+      .panel-right{padding:16px}
+    }
+
+    /* subtle utilities */
+    .muted{color:var(--muted)}
+    .small{font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Uzhavan Comrade Smart Crop Advisor">
+
+    <aside class="panel-left" aria-hidden="false">
+      <div class="brand">
+        <div class="logo" aria-hidden>UC</div>
+        <div>
+          <h1>Uzhavan Comrade</h1>
+          <p class="small">Smart Crop Advisory • Practical guidance for farmers</p>
+        </div>
+      </div>
+
+      <div class="search-card">
+        <label for="cropSelect" style="display:block;font-weight:800;color:rgba(255,255,255,0.95);margin-bottom:8px">🌱 Choose crop</label>
+        <div class="select-wrap">
+          <select id="cropSelect" class="crop-select" aria-label="Select crop">
+            <option value="rice">🌾 Rice</option>
+            <option value="tomato">🍅 Tomato</option>
+            <option value="onion">🧅 Onion</option>
+            <option value="potato">🥔 Potato</option>
+            <option value="chilli">🌶️ Chilli</option>
+            <option value="mango">🥭 Mango</option>
+            <option value="banana">🍌 Banana</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="guide-compact" id="guideCompact" aria-live="polite">
+        <div class="title">Rice • Quick guide</div>
+        <ul>
+          <li>🌱 Soil: <span class="sub">Clay loam, pH 5.5–7.0</span></li>
+          <li>📅 Season: <span class="sub">Kharif (June–July), Rabi (Nov–Dec)</span></li>
+          <li>💧 Water: <span class="sub">Maintain 2–5cm standing water</span></li>
+          <li>📈 Yield: <span class="sub">4–6 tons / ha</span></li>
+        </ul>
+      </div>
+
+      <div class="quick-actions">
+        <button class="btn" onclick="showMore()">Details</button>
+        <button class="btn" onclick="downloadPDF()">Download PDF</button>
+        <button class="btn primary" onclick="copyGuide()">Copy</button>
+      </div>
+
+      <div style="margin-top:auto;font-size:12px;opacity:0.95">Made with ❤️ for farmers — practical, simple, local.</div>
+    </aside>
+
+    <main class="panel-right">
+      <div class="hero">
+        <div>
+          <div class="title">Smart Crop Advisory</div>
+          <p class="small muted">Plan planting, water, and yield — localized quick tips at a glance.</p>
+        </div>
+        <div style="text-align:right">
+          <div class="small muted">Status: <strong id="statusText">Ready</strong></div>
+          <div class="small" style="margin-top:6px">Last updated: <span id="updatedAt">—</span></div>
+        </div>
+      </div>
+
+      <div class="cards" id="cards">
+        <div class="card" id="card-1">
+          <h3>Crop Insights</h3>
+          <p>Short, actionable guidance — soil, season, water, expected yield.</p>
+        </div>
+
+        <div class="card" id="card-2">
+          <h3>Pest & Disease</h3>
+          <p>Common issues and first-aid remedies — integrate local extension support.</p>
+        </div>
+
+        <div class="card" id="card-3">
+          <h3>Fertilizer</h3>
+          <p>Suggested fertiliser types and application timing per crop stage.</p>
+        </div>
+
+        <div class="card" id="card-4">
+          <h3>Water Plan</h3>
+          <p>Best irrigation practice and water-saving tips for each crop.</p>
+        </div>
+
+        <div class="card full-card">
+          <div>
+            <strong>Quick examples</strong>
+            <div class="small muted">Tap to preview crop guide</div>
+          </div>
+          <ul class="demo-list" role="list">
+            <li><button class="btn" onclick="setCrop('rice')">🌾 Rice</button></li>
+            <li><button class="btn" onclick="setCrop('tomato')">🍅 Tomato</button></li>
+            <li><button class="btn" onclick="setCrop('onion')">🧅 Onion</button></li>
+            <li><button class="btn" onclick="setCrop('potato')">🥔 Potato</button></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer">© Uzhavan Comrade — Built for farmers</div>
+    </main>
+
+  </div>
+
+  <script>
+    // Data (kept compact)
+    const CROP_GUIDES = {
+      rice: {title:'Rice',soil:'Clay loam, pH 5.5–7.0',season:'Kharif (June–July), Rabi (Nov–Dec)',water:'Maintain 2–5cm standing water',yield:'4–6 tons per hectare'},
+      tomato: {title:'Tomato',soil:'Sandy loam, pH 6.0–7.0',season:'All year (best Feb–May & Sep–Nov)',water:'Regular irrigation; avoid waterlogging',yield:'20–30 tons per hectare'},
+      onion: {title:'Onion',soil:'Well drained loamy soil, pH 6.0–7.5',season:'Rabi (Oct–Dec) best',water:'Keep soil moist; reduce near harvest',yield:'8–12 tons per hectare'},
+      potato: {title:'Potato',soil:'Loamy soil rich in organic matter',season:'Rabi (Oct–Feb)',water:'Moderate irrigation; avoid drought stress',yield:'15–20 tons per hectare'},
+      chilli: {title:'Chilli',soil:'Well-drained loam, pH 6.0–7.5',season:'Kharif & summer',water:'Moderate, regular irrigation',yield:'4–8 tons per hectare'},
+      mango: {title:'Mango',soil:'Deep well-drained soil',season:'Flowering in winter; fruiting in summer',water:'Young trees need regular watering',yield:'Varies by variety'},
+      banana: {title:'Banana',soil:'Rich, well-drained loam with organic matter',season:'Tropical, all year',water:'High water requirement; keep moist',yield:'20–40 tons per hectare'}
+    };
+
+    const sel = document.getElementById('cropSelect');
+    const guideCompact = document.getElementById('guideCompact');
+    const updatedAt = document.getElementById('updatedAt');
+    const statusText = document.getElementById('statusText');
+
+    function renderGuide(key){
+      const g = CROP_GUIDES[key];
+      if(!g) return;
+      guideCompact.innerHTML = `
+        <div class="title">${g.title} • Quick guide</div>
+        <ul>
+          <li>🌱 Soil: <span class="sub">${g.soil}</span></li>
+          <li>📅 Season: <span class="sub">${g.season}</span></li>
+          <li>💧 Water: <span class="sub">${g.water}</span></li>
+          <li>📈 Yield: <span class="sub">${g.yield}</span></li>
+        </ul>
+      `;
+      updatedAt.textContent = new Date().toLocaleString();
+      statusText.textContent = 'Updated';
+    }
+
+    // initialize
+    renderGuide(sel.value);
+    sel.addEventListener('change',(e)=>renderGuide(e.target.value));
+
+    function setCrop(k){
+      sel.value = k;
+      sel.dispatchEvent(new Event('change'));
+      // smooth focus to left panel on mobile
+      document.querySelector('.panel-left').scrollIntoView({behavior:'smooth'});
+    }
+
+    function copyGuide(){
+      const text = guideCompact.innerText;
+      navigator.clipboard?.writeText(text).then(()=> alert('Guide copied to clipboard')).catch(()=> alert('Copy failed'));
+    }
+
+    function downloadPDF(){
+      // Simple client-side PDF using browser printing as fallback
+      const popup = window.open('', '_blank');
+      const html = `
+        <html><head><title>Crop Guide</title><meta charset="utf-8"></head><body style="font-family:Inter,Arial; padding:20px;">
+        <h2>${CROP_GUIDES[sel.value].title} — Quick guide</h2>
+        <ul>
+          <li><strong>Soil:</strong> ${CROP_GUIDES[sel.value].soil}</li>
+          <li><strong>Season:</strong> ${CROP_GUIDES[sel.value].season}</li>
+          <li><strong>Water:</strong> ${CROP_GUIDES[sel.value].water}</li>
+          <li><strong>Yield:</strong> ${CROP_GUIDES[sel.value].yield}</li>
+        </ul>
+        <p>Generated: ${new Date().toLocaleString()}</p>
+        </body></html>`;
+      popup.document.write(html);
+      popup.document.close();
+      popup.focus();
+      // let user print/save
+    }
+
+    function showMore(){
+      alert('More details - integrate pest, fertiliser schedule, local weather, and extension contacts. I can add those sections if you want.');
+    }
+  </script>
+</body>
+</html>

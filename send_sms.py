@@ -1,0 +1,70 @@
+# send_sms.py
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from twilio.rest import Client
+from datetime import datetime
+import os
+
+# --- Configuration (move to env for production) ---
+ACCOUNT_SID = "AC59440a471631acd6b163072cc285b321"
+AUTH_TOKEN  = "88a8059517d9f7236d7c1cb71a78641e"
+TWILIO_NUMBER = "+12316818105"
+DEFAULT_RECEIVER = "+919944869253"
+
+app = Flask(__name__)
+CORS(app)  # allow cross-origin requests from your static server
+
+# Init Twilio client once
+twilio_client = Client(ACCOUNT_SID, AUTH_TOKEN)
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"ok": True, "time": datetime.utcnow().isoformat()})
+
+@app.route("/send-sms", methods=["POST", "OPTIONS"])
+def send_sms():
+    """
+    Accepts optional JSON/form payload:
+      { "to": "+91...", "body": "Custom message" }
+    If not provided, uses DEFAULT_RECEIVER and a short test body.
+    Returns JSON with Twilio SID + status + body_sent.
+    """
+    # handle preflight OPTIONS quickly
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
+
+    try:
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+        to_number = payload.get("to") or DEFAULT_RECEIVER
+        # short plain-English default body (less likely to be blocked while testing)
+        body = payload.get("body") or f"Test SMS from button at {datetime.now().strftime('%H:%M:%S')}"
+
+        # debug log
+        print(f"[{datetime.now().isoformat()}] /send-sms called from {request.remote_addr} -> to={to_number} body='{body[:120]}'")
+
+        # call Twilio
+        msg = twilio_client.messages.create(
+            body=body,
+            from_=TWILIO_NUMBER,
+            to=to_number
+        )
+
+        # debug log Twilio response
+        print(f"[{datetime.now().isoformat()}] Twilio SID={msg.sid} Status={msg.status} To={msg.to} From={msg.from_}")
+
+        return jsonify({
+            "success": True,
+            "message": "SMS request accepted",
+            "sid": msg.sid,
+            "status": msg.status,
+            "to": msg.to,
+            "body_sent": body
+        }), 200
+
+    except Exception as e:
+        print(f"[{datetime.now().isoformat()}] ERROR in /send-sms: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+if __name__ == "__main__":
+    # Bind to all interfaces to avoid host mismatch issues with Live Server
+    app.run(debug=True, host="0.0.0.0", port=5000)

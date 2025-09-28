@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Uzhavan Comrade — AI Pest Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<!-- Font Awesome for icons (optional) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-pbVj9E0x2Z7Z2fVtQ7mQZQqN6laJ7a6v0A2QxHq7fEJk4i5g6m6JbXx7B6v0G4n1Zt1s9f8s8a7k2j0qZ3gvg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+  :root{
+    --bg: linear-gradient(180deg,#f3fff4,#f9fff9);
+    --accent: #0ba34a;
+    --accent-2:#0a7b36;
+    --muted:#536b57;
+    --card:#ffffff;
+    --glass: rgba(255,255,255,0.8);
+    --radius:16px;
+    --shadow: 0 10px 30px rgba(10,120,60,0.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#072b16}
+  .container{max-width:980px;margin:18px auto;padding:14px}
+  header.site-header{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:var(--shadow)}
+  .logo{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+  header h1{margin:0;font-size:18px}
+  header p{margin:0;font-size:12px;opacity:0.95}
+  main{margin-top:14px;display:grid;grid-template-columns:1fr;gap:12px}
+  .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow);border:1px solid rgba(10,130,53,0.04)}
+  .section-title{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--accent-2);font-size:16px;margin-bottom:8px}
+  .muted{color:var(--muted)}
+  /* video area */
+  .video-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
+  video#cameraFeed{width:100%;max-height:420px;border-radius:12px;background:#000;object-fit:cover}
+  #videoContainer{width:100%;display:none;justify-content:center}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{flex:1;padding:10px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;font-weight:800;cursor:pointer;min-width:120px}
+  .btn.ghost{background:transparent;color:var(--accent-2);border:2px solid rgba(10,130,53,0.08)}
+  .btn.icon{display:inline-flex;align-items:center;gap:8px;justify-content:center}
+  .capture-btn{position:relative;padding:12px 14px;border-radius:12px;border:0;background:linear-gradient(90deg,#fff,#f0fff0);color:var(--accent-2);font-weight:800;box-shadow:0 10px 30px rgba(10,130,53,0.06);cursor:pointer}
+  .capture-btn i{color:var(--accent-2)}
+  #imagePreview img{max-width:100%;border-radius:14px;display:block;margin:8px 0;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
+  /* analysis result */
+  .analysis {margin-top:12px;padding:12px;border-radius:12px;background:linear-gradient(180deg,#f7fff7,#fff);border-left:6px solid var(--accent-2)}
+  .analysis h4{margin:0 0 8px 0}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{background:linear-gradient(90deg,rgba(10,130,53,0.06),rgba(10,130,53,0.03));padding:8px 10px;border-radius:999px;font-weight:700;color:var(--accent-2)}
+  /* voice area */
+  #voiceOutput{width:100%;min-height:120px;padding:12px;border:2px solid rgba(10,130,53,0.08);border-radius:10px;background:#f6fff6;font-family:Inter,monospace;resize:vertical}
+  /* helper list */
+  .help-list{display:grid;gap:8px}
+  .help-item{background:linear-gradient(180deg,#fff,#fbfff8);padding:12px;border-radius:12px;border:1px solid rgba(10,130,53,0.04)}
+  .row{display:flex;gap:10px;align-items:center}
+  .seller-card{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(90deg,#fff,#fbfff8)}
+  footer{margin-top:12px;text-align:center;color:var(--muted);font-weight:700}
+  @media(min-width:900px){
+    main{grid-template-columns:1fr 420px}
+    #imagePreview img{max-height:300px}
+  }
+  @media(max-width:520px){
+    .btn{min-width:unset}
+    header{padding:10px;}
+    .logo{width:48px;height:48px}
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header class="site-header" role="banner">
+      <div class="logo" aria-hidden>UC</div>
+      <div>
+        <h1>Uzhavan Comrade</h1>
+        <p>AI Pest Control — Smart detection & practical advice</p>
+      </div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end">
+        <small style="font-weight:800;color:#fff">Helpline</small>
+        <small style="font-weight:700;color:#fff">1800-180-1551</small>
+      </div>
+    </header>
+
+    <main role="main">
+      <!-- Left: Capture, Upload, Voice, Results -->
+      <section class="card" aria-labelledby="pestTitle">
+        <div id="pestTitle" class="section-title"><i class="fa-solid fa-camera"></i> Smart Pest Detection</div>
+        <p class="muted">Capture or upload a crop image. The AI module will analyze and give recommendations — simulated here for demo.</p>
+
+        <div class="video-wrap">
+          <div id="videoContainer">
+            <video id="cameraFeed" playsinline autoplay muted></video>
+          </div>
+
+          <div style="width:100%;display:flex;gap:8px">
+            <button class="btn icon" id="openCameraBtn" onclick="startCamera()"><i class="fa-solid fa-camera"></i> Open Camera</button>
+            <button class="btn ghost" onclick="document.getElementById('imageUpload').click()"><i class="fa-solid fa-image"></i> Upload Image</button>
+          </div>
+
+          <div style="width:100%;display:flex;gap:8px;margin-top:8px">
+            <button class="capture-btn" id="captureBtn" onclick="captureImage()"><i class="fa-solid fa-circle"></i> Capture Photo</button>
+            <button class="btn ghost" onclick="startVideoCall()"><i class="fa-solid fa-video"></i> Video Consult</button>
+          </div>
+
+          <input type="file" id="imageUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+
+          <div id="imagePreview" aria-live="polite" style="width:100%;margin-top:12px"></div>
+        </div>
+
+        <!-- Voice recognition -->
+        <div style="margin-top:12px">
+          <div class="section-title"><i class="fa-solid fa-microphone"></i> Voice Assistant</div>
+          <p class="muted">Speak about crop issues (e.g., "my tomato leaves are yellow" or "aphids on chilli").</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button class="btn" onclick="startVoiceRecognition()"><i class="fa-solid fa-microphone"></i> Start Voice</button>
+            <button class="btn ghost" onclick="stopVoiceRecognition()"><i class="fa-solid fa-stop"></i> Stop</button>
+          </div>
+          <textarea id="voiceOutput" placeholder="Voice recognition output will appear here..." readonly></textarea>
+        </div>
+      </section>
+
+      <!-- Right column: Common solutions, sellers, quick tips -->
+      <aside>
+        <section class="card" aria-labelledby="solutionsTitle">
+          <div id="solutionsTitle" class="section-title"><i class="fa-solid fa-bug"></i> Common Pest Solutions</div>
+          <div class="help-list">
+            <div class="help-item"><strong>Aphids</strong><br/>Spray neem oil (5 ml/L) every 7–10 days. Yellow sticky traps help.</div>
+            <div class="help-item"><strong>Stem Borers</strong><br/>Pheromone traps; remove damaged stems; Bt spray in evenings.</div>
+            <div class="help-item"><strong>Whiteflies</strong><br/>Yellow sticky traps; weekly neem oil spray; encourage predators.</div>
+          </div>
+        </section>
+
+        <section class="card" style="margin-top:12px" aria-labelledby="expertTitle">
+          <div id="expertTitle" class="section-title"><i class="fa-solid fa-user-headset"></i> Expert Help</div>
+          <div class="seller-card">
+            <div style="display:flex;gap:10px;align-items:center">
+              <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900">VS</div>
+              <div>
+                <div style="font-weight:800">S. Venkatesh</div>
+                <div class="muted" style="font-size:13px">Crop Advisor</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn ghost" onclick="contactSeller('S. Venkatesh','+919876543210')"><i class="fa-solid fa-phone"></i> Call</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <small class="muted">Prefer a video call? Book a slot for remote consultation with an expert.</small>
+            <div style="margin-top:10px">
+              <button class="btn" onclick="startVideoCall()">Request Video Consult</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" style="margin-top:12px" aria-labelledby="tipsTitle">
+          <div id="tipsTitle" class="section-title"><i class="fa-solid fa-lightbulb"></i> Quick Tips</div>
+          <div class="chips">
+            <div class="chip">Integrated Pest Management</div>
+            <div class="chip">Neem Oil</div>
+            <div class="chip">Pheromone Traps</div>
+            <div class="chip">Field Hygiene</div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <footer>
+      © Uzhavan Comrade — Built for farmers • Data & advice are indicative — consult extension for critical problems
+    </footer>
+  </div>
+
+<script>
+/* ======== Global state ======== */
+let mediaStream = null;
+let recognition = null;
+let currentLanguage = 'en'; // can be set to 'ta','hi','kn','te','ml' etc.
+
+/* ======== Camera & Capture ======== */
+async function startCamera(){
+  const videoContainer = document.getElementById('videoContainer');
+  const videoElement = document.getElementById('cameraFeed');
+
+  // stop any existing stream first
+  stopCamera();
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showModal('Camera not supported by your browser.');
+    return;
+  }
+
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    mediaStream = stream;
+    videoElement.srcObject = stream;
+    videoElement.play().catch(()=>{ /* ignore autoplay errors */ });
+    videoContainer.style.display = 'block';
+    // reveal capture button visually
+    document.getElementById('captureBtn').style.display = 'inline-block';
+  }catch(err){
+    console.error('getUserMedia error', err);
+    showModal('Camera access denied or unavailable. Please allow camera permission and try again.');
+  }
+}
+
+function stopCamera(){
+  if(mediaStream){
+    mediaStream.getTracks().forEach(t => t.stop());
+    mediaStream = null;
+  }
+  const videoElement = document.getElementById('cameraFeed');
+  if(videoElement){
+    videoElement.pause();
+    videoElement.srcObject = null;
+  }
+  document.getElementById('videoContainer').style.display = 'none';
+}
+
+function captureImage(){
+  const videoElement = document.getElementById('cameraFeed');
+  if(!videoElement || !videoElement.videoWidth){
+    showModal('Camera not ready. Please open the camera and try again.');
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = videoElement.videoWidth;
+  canvas.height = videoElement.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+  // stop camera after capture
+  stopCamera();
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  showPreviewImage(dataUrl);
+
+  // run simulated analysis
+  setTimeout(() => showPestAnalysis(), 900);
+}
+
+/* ======== Upload handling ======== */
+function handleImageUpload(evt){
+  const file = evt.target.files && evt.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){
+    showModal('Please upload an image file (jpg, png).');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    showPreviewImage(e.target.result);
+    setTimeout(() => showPestAnalysis(), 900);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPreviewImage(dataUrl){
+  const preview = document.getElementById('imagePreview');
+  preview.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.alt = 'Captured crop image';
+  img.loading = 'lazy';
+  preview.appendChild(img);
+}
+
+/* ======== Simulated AI Analysis ======== */
+function showPestAnalysis(){
+  const analyses = [
+    {
+      result: '✅ Healthy Plant Detected',
+      confidence: '95%',
+      recommendation: 'No pests found. Continue regular monitoring and maintain good field hygiene.',
+      border: '4px solid #2ecc71'
+    },
+    {
+      result: '⚠️ Aphid Infestation Detected',
+      confidence: '87%',
+      recommendation: 'Spray neem oil solution (5ml per litre) every 7 days; use yellow sticky traps and encourage ladybugs.',
+      border: '4px solid #ffb703'
+    },
+    {
+      result: '🔍 Leaf Miner Activity',
+      confidence: '78%',
+      recommendation: 'Remove affected leaves; use pheromone/trap controls; consider Bt or organic insecticide if severe.',
+      border: '4px solid #ff6b6b'
+    },
+    {
+      result: '🐛 Caterpillar / Borer Signs',
+      confidence: '82%',
+      recommendation: 'Inspect stems; remove and destroy infested parts; use biological controls (Bt) and pheromone traps.',
+      border: '4px solid #f08a24'
+    }
+  ];
+
+  // sometimes show "no image" helpful message
+  const preview = document.getElementById('imagePreview');
+  if(!preview.innerHTML || preview.innerHTML.trim() === ''){
+    showModal('Please capture or upload a clear image of the affected plant area (leaf/fruit/stem).');
+    return;
+  }
+
+  // pick best-match heuristically (simulated)
+  const idx = Math.floor(Math.random() * analyses.length);
+  const chosen = analyses[idx];
+
+  // remove existing analysis
+  const existing = document.querySelector('.analysis');
+  if(existing) existing.remove();
+
+  // create new result card
+  const block = document.createElement('div');
+  block.className = 'analysis';
+  block.style.border = chosen.border;
+
+  block.innerHTML = `
+    <h4 style="color:${chosen.border.includes('#2ecc71')? '#2e7d2e' : '#8b3a3a'}"><i class="fa-solid fa-magnifying-glass"></i> AI Analysis Result</h4>
+    <p style="font-size:1.05rem;font-weight:800;margin:6px 0">${chosen.result}</p>
+    <p style="margin:6px 0;color:#444"><strong>Confidence:</strong> ${chosen.confidence}</p>
+    <p style="margin:6px 0;color:#1d7a2d;font-weight:700"><strong>Recommendation:</strong> ${chosen.recommendation}</p>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn ghost" onclick="saveReport()">Save Report</button>
+      <button class="btn" onclick="contactSeller('Local Agriexpert','+919876543210')"><i class="fa-solid fa-phone"></i> Contact Expert</button>
+    </div>
+  `;
+
+  // append under preview
+  preview.appendChild(block);
+}
+
+/* ======== Save / share report (demo) ======== */
+function saveReport(){
+  alert('Report saved locally (demo). You can add server upload or PDF export if needed.');
+}
+
+/* ======== Voice Recognition ======== */
+function startVoiceRecognition(){
+  const voiceOutput = document.getElementById('voiceOutput');
+
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    voiceOutput.value = 'Voice recognition not supported in this browser. Please use Chrome or Edge on desktop/mobile.';
+    return;
+  }
+
+  if(recognition){
+    // already running
+    recognition.stop();
+    recognition = null;
+  }
+
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  // set language based on currentLanguage variable; default 'en-US'
+  recognition.lang = (currentLanguage === 'hi' ? 'hi-IN' :
+                      currentLanguage === 'ta' ? 'ta-IN' :
+                      currentLanguage === 'kn' ? 'kn-IN' :
+                      currentLanguage === 'te' ? 'te-IN' :
+                      currentLanguage === 'ml' ? 'ml-IN' : 'en-IN');
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.continuous = false;
+
+  voiceOutput.value = 'Listening... Speak about your crop problem (press Stop to cancel).';
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    voiceOutput.value = `You said: "${transcript}"\n\n`;
+    // simple parsing rules (expandable)
+    const lower = transcript.toLowerCase();
+    let response = '';
+
+    if (/(pest|insect|bug|aphid|caterpillar|worm|borer)/i.test(lower)) {
+      response = `🐛 PEST CONTROL ADVICE:\n• Spray neem oil (5ml/L) every 7 days\n• Install yellow sticky traps\n• Remove heavily infested plants\n• Prefer evening sprays to protect pollinators.`;
+    } else if (/(disease|fungus|blight|rot|wilt|spot)/i.test(lower)) {
+      response = `🦠 DISEASE MANAGEMENT:\n• Improve drainage and air circulation\n• Use copper-based fungicides where recommended\n• Remove infected plants and burn away from field\n• Monitor humidity levels and avoid overhead irrigation.`;
+    } else if (/(fertilizer|nutrition|yellow|weak|nitrogen)/i.test(lower)) {
+      response = `🌱 NUTRITION ADVICE:\n• Test soil pH and nutrients\n• Apply balanced NPK as per crop stage\n• Use compost and micronutrient sprays if needed.`;
+    } else if (/(water|irrigation|dry|drought|wet)/i.test(lower)) {
+      response = `💧 WATER MANAGEMENT:\n• Use drip or micro-sprinkler for efficient use\n• Water early morning or late evening\n• Mulch to retain soil moisture.`;
+    } else if (/(rain|weather|temperature|heat|cold)/i.test(lower)) {
+      response = `🌤️ WEATHER ADVISORY:\n• Monitor short-term forecast and protect crops from extremes\n• Use shade nets and windbreaks when needed.`;
+    } else if (/(rice|paddy)/i.test(lower)) {
+      response = `🌾 RICE ADVICE:\n• Maintain 2-5 cm standing water (where applicable)\n• Transplant recommended seedlings and split N application.`;
+    } else if (/(tomato)/i.test(lower)) {
+      response = `🍅 TOMATO ADVICE:\n• Use staking and drip irrigation\n• Monitor for fruit borer and manage with traps.`;
+    } else {
+      response = `🌾 GENERAL FARMING ADVICE:\n• Practice crop rotation, maintain soil health, monitor daily.\n• For expert help call 1800-180-1551`;
+    }
+
+    voiceOutput.value += response;
+  };
+
+  recognition.onerror = (event) => {
+    const voiceOutput = document.getElementById('voiceOutput');
+    let msg = 'Voice recognition error: ';
+    switch(event.error){
+      case 'no-speech': msg += 'No speech detected. Please speak clearly.'; break;
+      case 'audio-capture': msg += 'Microphone not available. Check permissions.'; break;
+      case 'not-allowed': msg += 'Microphone access denied. Please allow microphone permissions.'; break;
+      default: msg += event.error;
+    }
+    voiceOutput.value = msg;
+  };
+
+  recognition.onend = () => {
+    // ended
+  };
+
+  recognition.start();
+}
+
+function stopVoiceRecognition(){
+  if(recognition){
+    recognition.stop();
+    recognition = null;
+    const voiceOutput = document.getElementById('voiceOutput');
+    voiceOutput.value = (voiceOutput.value || '') + '\n\nStopped listening.';
+  }
+}
+
+/* ======== Contact / Video consult ======== */
+function contactSeller(seller, mobile){
+  const ok = confirm(`Contact Seller:\n${seller}\n${mobile}\n\nCall now?`);
+  if(ok){
+    window.location.href = `tel:${mobile}`;
+  }
+}
+
+function startVideoCall(){
+  alert('Video consultation feature coming soon. Please call helpline 1800-180-1551 for immediate support.');
+}
+
+/* ======== Small utilities & cleanup ======== */
+function showModal(message){
+  alert(message);
+}
+
+/* stop camera when leaving page / refresh */
+window.addEventListener('beforeunload', () => {
+  stopCamera();
+  if(recognition) recognition.stop();
+});
+</script>
+</body>
+</html>
